@@ -28,10 +28,15 @@
       <div>{{user.email}} : {{user.rtsp_url}}</div>
     </li>
   </ul>
-</script>
+  <div id="mtvPlayer"> 
+    <video id="test_video" controls autoplay>
+      <source src="rtsp://184.72.239.149/vod/mp4:BigBuckBunny_175k.mov">
+    </video>
+    </div>
+  </script>
 
-<script>
-  angular.module('app', ['ngRoute'])
+  <script>
+    angular.module('app', ['ngRoute'])
     //---------------
     // Services
     //---------------
