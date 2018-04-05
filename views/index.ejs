@@ -1,11 +1,108 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
-  </body>
+<html ng-app="app">
+<head>
+  <title>RTSP</title>
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+</head>
+<body>
+
+  <ng-view></ng-view>
+
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.5/angular.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.5/angular-route.min.js"></script>
+
+  <!-- Template -->
+  <script type="text/ng-template" id="/login.html">
+    Email: <input type="text" ng-model="Users.user_email">
+    <button ng-click = "login()">Login</button>
+  </script>
+
+  <script type="text/ng-template" id="/users.html">
+    Insert RTSP URL: <input type="text" ng-model="rtsp_url">
+    <button ng-click = "saveUser()">Save</button>
+  </script>
+
+  <script type="text/ng-template" id="/userDetails.html">
+   <ul>
+    <li ng-repeat="user in users | filter: search">
+      <div>{{user.email}} : {{user.rtsp_url}}</div>
+    </li>
+  </ul>
+</script>
+
+<script>
+  angular.module('app', ['ngRoute'])
+    //---------------
+    // Services
+    //---------------
+
+    .factory('Users', ['$http', function($http) {
+      // return $http.get('/users');
+      var Users = {};
+      Users.user_email = "";
+      Users.getUsers = function () {
+        return $http.get('/users');
+      }
+      Users.createUser = function (data) {
+        return $http.post('/users', data);
+      }
+      return Users;
+    }])
+
+    //---------------
+    // Controllers
+    //---------------
+    .controller('LoginController', ['$scope', 'Users', '$location', function ($scope, Users, $location) {
+      $scope.Users = Users;
+      $scope.login = function () {
+        $location.path('/users');
+      }
+    }])
+    .controller('UsersController', ['$scope', 'Users', '$location', function ($scope, Users, $location) {
+      $scope.rtsp_url = "";
+      $scope.Users = Users;
+      $scope.saveUser = function () {
+        var data = {email: $scope.Users.user_email, rtsp_url: $scope.rtsp_url }
+        Users.createUser(data).then(function (resolve) {
+          $location.path('/userDetails');
+        }, function(reject) {
+          console.error(reject);
+        });
+      };
+      
+    }])
+
+    .controller('UserDetailCtrl', ['$scope', '$routeParams', 'Users', function ($scope, $routeParams, Users) {
+      Users.getUsers().then(function (resolve) {
+        $scope.users = resolve.data;
+      }, function(reject) {
+        $scope.users = [];
+      });
+      $scope.users = Users[$routeParams.id];
+    }])
+    //---------------
+    // Routes
+    //---------------
+    .config(['$routeProvider', '$locationProvider', function ($routeProvider, $locationProvider) {
+      $locationProvider.html5Mode({
+        enabled: true,
+        requireBase: false
+      });
+      $routeProvider
+      .when('/', {
+        templateUrl: '/login.html',
+        controller: 'LoginController'
+      })
+      .when('/users', {
+        templateUrl: '/users.html',
+        controller: 'UsersController'
+      })
+      .when('/:id', {
+        templateUrl: '/userDetails.html',
+        controller: 'UserDetailCtrl'
+      });
+    }]);
+  </script>
+
+</body>
 </html>
