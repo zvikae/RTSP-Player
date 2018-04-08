@@ -15,23 +15,27 @@
   <script type="text/ng-template" id="/login.html">
     Email: <input type="text" ng-model="Users.user_email">
     <button ng-click = "login()">Login</button>
-<div>
-  
-  <iframe id='fp_embed_player' src='https://wcs5-eu.flashphoner.com:8888/embed_player?urlServer=&streamName=rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov&mediaProviders=WebRTC,Flash,MSE,WSPlayer' marginwidth='0' marginheight='0' frameborder='0' width='100%' height='100%' scrolling='no' allowfullscreen='allowfullscreen'></iframe>
-</div>
-    </script>
+  </script>
 
-    <script type="text/ng-template" id="/users.html">
-      Insert RTSP URL: <input type="text" ng-model="rtsp_url">
-      <button ng-click = "saveUser()">Save</button>
-    </script>
+  <script type="text/ng-template" id="/userUrl.html">
+    Insert RTSP URL: <input type="text" ng-model="rtsp_url">
+    <button ng-click = "saveUser()">Save</button>
+  </script>
 
-    <script type="text/ng-template" id="/userDetails.html">
-     <ul>
-      <li ng-repeat="user in users | filter: search">
-        <div>{{user.email}} : {{user.rtsp_url}}</div>
-      </li>
-    </ul>
+  <script type="text/ng-template" id="/userDetails.html">
+   <ul>
+    <li class = "user-elem" ng-repeat="user in users | filter: search">
+      <div>
+        <div>User email: {{user.email}}</div>
+        <div>User RTSP URL: {{user.rtsp_url}}</div>
+        <button ng-click = "playRtsp(user.rtsp_url)">Play video</button>
+      </div>
+    </li>
+  </ul>
+  <div class = "rtsp-player" ng-show = "rtsp_url">
+    <div class = "close-rtsp-player" ng-click = "closeRtspPlayer()">X</div>
+    <iframe id='fp_embed_player' ng-src="{{rtsp_url}}" marginwidth='0' marginheight='0' frameborder='0' width='100%' height='100%' scrolling='no' allowfullscreen='allowfullscreen'></iframe>
+  </div>
 </script>
 
 <script>
@@ -39,9 +43,10 @@
     //---------------
     // Services
     //---------------
-
+    .config(function($sceProvider) {
+      $sceProvider.enabled(false);
+    })
     .factory('Users', ['$http', function($http) {
-      // return $http.get('/users');
       var Users = {};
       Users.user_email = "";
       Users.getUsers = function () {
@@ -59,10 +64,10 @@
     .controller('LoginController', ['$scope', 'Users', '$location', function ($scope, Users, $location) {
       $scope.Users = Users;
       $scope.login = function () {
-        $location.path('/users');
+        $location.path('/userUrl');
       }
     }])
-    .controller('UsersController', ['$scope', 'Users', '$location', function ($scope, Users, $location) {
+    .controller('UserUrlController', ['$scope', 'Users', '$location', function ($scope, Users, $location) {
       $scope.rtsp_url = "";
       $scope.Users = Users;
       $scope.saveUser = function () {
@@ -76,13 +81,20 @@
       
     }])
 
-    .controller('UserDetailCtrl', ['$scope', '$routeParams', 'Users', function ($scope, $routeParams, Users) {
+    .controller('UserDetailCtrl', ['$scope', '$routeParams', 'Users', '$sce', function ($scope, $routeParams, Users, $sce) {
       Users.getUsers().then(function (resolve) {
         $scope.users = resolve.data;
       }, function(reject) {
         $scope.users = [];
       });
-      $scope.users = Users[$routeParams.id];
+      $scope.playRtsp = function (rtsp_url) {
+        var link = "https://wcs5-eu.flashphoner.com:8888/embed_player?urlServer=&streamName=" + rtsp_url + "&mediaProviders=WebRTC,Flash,MSE,WSPlayer";
+        $scope.rtsp_url = $sce.trustAsResourceUrl(link)
+      };
+
+      $scope.closeRtspPlayer = function () {
+        $scope.rtsp_url = "";
+      };
     }])
     //---------------
     // Routes
@@ -97,11 +109,11 @@
         templateUrl: '/login.html',
         controller: 'LoginController'
       })
-      .when('/users', {
-        templateUrl: '/users.html',
-        controller: 'UsersController'
+      .when('/userUrl', {
+        templateUrl: '/userUrl.html',
+        controller: 'UserUrlController'
       })
-      .when('/:id', {
+      .when('/userDetails', {
         templateUrl: '/userDetails.html',
         controller: 'UserDetailCtrl'
       });

@@ -6,3 +6,18 @@ body {
 a {
   color: #00B7FF;
 }
+
+.rtsp-player {
+  height: 400px;
+  width: 400px;
+  margin: 0 auto;
+}
+
+.close-rtsp-player {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.user-elem {
+  margin-top: 10px;
+}
